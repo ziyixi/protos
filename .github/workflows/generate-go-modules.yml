@@ -5,12 +5,12 @@ on:
     branches: main
     paths:
       - 'proto/**'
-      - 'scripts/generate_go_modules.sh'
+      - 'scripts/generate-go-proto.sh'
   pull_request:
     branches: main
     paths:
       - 'proto/**'
-      - 'scripts/generate_go_modules.sh'
+      - 'scripts/generate-go-proto.sh'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
       
       - name: Install Protoc
         run: |
-          apt-get update && apt-get install -y protobuf-compiler
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
           protoc --version
       
       - name: Install Go Protobuf Plugins
@@ -39,9 +39,10 @@ jobs:
       
       - name: Generate Go Modules
         run: |
-          chmod +x ./scripts/generate_go_modules.sh
+          chmod +x ./scripts/generate-go-proto.sh
           export MODULE_PREFIX="github.com/${{ github.repository }}"
-          ./scripts/generate_go_modules.sh
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          ./scripts/generate-go-proto.sh
       
       - name: Commit and Push Changes
         run: |
