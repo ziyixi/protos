@@ -50,12 +50,20 @@ jobs:
       - name: Check for changes
         id: git-check
         run: |
-          if [[ -d "go" && -n "$(ls -A go/)" ]]; then
-            echo "CHANGES_EXIST=true" >> $GITHUB_ENV
-          else
-            echo "No Go files were generated or directory is empty"
+          # First generate a status of what would be added with the force flag
+          git add -f -n go/ > /dev/null
+          # Check if there are any changes
+          if git diff --cached --quiet; then
+            echo "No changes detected in Go files"
             echo "CHANGES_EXIST=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected in Go files"
+            echo "CHANGES_EXIST=true" >> $GITHUB_ENV
+            # Show summary of changes
+            git diff --cached --stat
           fi
+          # Reset the staged changes for now
+          git reset
       
       - name: Commit and Push Changes
         if: env.CHANGES_EXIST == 'true'
