@@ -62,7 +62,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add go/
+          git add -f go/   # Force add even if in .gitignore
           git commit -m "Auto-generate Go modules from Proto files"
           git push
         env:
