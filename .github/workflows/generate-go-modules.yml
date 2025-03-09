@@ -6,16 +6,20 @@ on:
     paths:
       - 'proto/**'
       - 'scripts/generate-go-proto.sh'
+      - '.github/workflows/generate-go-modules.yml'
   pull_request:
     branches: main
     paths:
       - 'proto/**'
       - 'scripts/generate-go-proto.sh'
+      - '.github/workflows/generate-go-modules.yml'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
   generate-go-modules:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout repository
@@ -39,15 +43,27 @@ jobs:
       
       - name: Generate Go Modules
         run: |
-          chmod +x ./scripts/generate-go-proto.sh
           export MODULE_PREFIX="github.com/${{ github.repository }}"
           export PATH="$PATH:$(go env GOPATH)/bin"
-          ./scripts/generate-go-proto.sh
+          bash ./scripts/generate-go-proto.sh
+      
+      - name: Check for changes
+        id: git-check
+        run: |
+          if [[ -d "go" && -n "$(ls -A go/)" ]]; then
+            echo "CHANGES_EXIST=true" >> $GITHUB_ENV
+          else
+            echo "No Go files were generated or directory is empty"
+            echo "CHANGES_EXIST=false" >> $GITHUB_ENV
+          fi
       
       - name: Commit and Push Changes
+        if: env.CHANGES_EXIST == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add go/
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-generate Go modules from Proto files"
+          git commit -m "Auto-generate Go modules from Proto files"
           git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
