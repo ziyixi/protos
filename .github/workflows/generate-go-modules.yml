@@ -50,13 +50,15 @@ jobs:
       - name: Generate Go Modules
         run: |
           export MODULE_PREFIX="github.com/${{ github.repository }}"
-          # Set PROTO_DIR_ENV to point to the location of .proto files
-          # within the 'temp_protobuf_checkout' directory.
-          # If your .proto files are in 'proto/' inside the 'protobuf' branch:
-          export PROTO_DIR_ENV="temp_protobuf_checkout/proto"
+          # PROTO_BASE_DIR_ENV: The root of the checkout where 'proto' subdir resides.
+          # This will be used as the --proto_path for protoc.
+          export PROTO_BASE_DIR_ENV="temp_protobuf_checkout"
+          # PROTO_SUBDIR_NAME_ENV: The name of the directory containing .proto files, relative to PROTO_BASE_DIR_ENV.
+          export PROTO_SUBDIR_NAME_ENV="proto"
+          
           bash ./scripts/generate-go-proto.sh
         env:
-          # GITHUB_REPOSITORY is in format owner/repo
+          # GITHUB_REPOSITORY is in format owner/repo, MODULE_PREFIX needs the host.
           MODULE_PREFIX: github.com/${{ github.repository }}
 
 
