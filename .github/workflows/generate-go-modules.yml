@@ -1,77 +1,99 @@
 name: Generate Go Modules from Proto Files
 
 on:
+  # Trigger workflow when changes are pushed to the 'protobuf' branch,
+  # specifically if .proto files within the 'proto/' directory (on that branch) are modified.
   push:
-    branches: main
+    branches:
+      - protobuf # Name of your branch with .proto definitions
     paths:
-      - 'proto/**'
-      - 'scripts/generate-go-proto.sh'
-      - '.github/workflows/generate-go-modules.yml'
-  pull_request:
-    branches: main
-    paths:
-      - 'proto/**'
-      - 'scripts/generate-go-proto.sh'
-      - '.github/workflows/generate-go-modules.yml'
-  workflow_dispatch:  # Allow manual triggering
+      - 'proto/**' # Adjust if your .proto files are in a different directory on the 'protobuf' branch
+
+  workflow_dispatch: # Allow manual triggering
 
 jobs:
   generate-go-modules:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-    
+      contents: write # Required to commit and push changes
+
     steps:
-      - name: Checkout repository
+      - name: Checkout main branch
         uses: actions/checkout@v4
-      
+        with:
+          ref: main # Checkout the main branch first, as we'll commit generated files here
+          # token: ${{ secrets.GITHUB_TOKEN }} # Default token is usually sufficient
+
+      - name: Checkout protobuf branch for .proto files
+        uses: actions/checkout@v4
+        with:
+          ref: protobuf # The branch where your .proto files are
+          path: temp_protobuf_checkout # Checkout into a temporary subdirectory
+          # token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.0'
-      
+          go-version: '1.21' # Specify your Go version
+
       - name: Install Protoc
         run: |
           sudo apt-get update && sudo apt-get install -y protobuf-compiler
           protoc --version
-      
+
       - name: Install Go Protobuf Plugins
         run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
-          export PATH="$PATH:$(go env GOPATH)/bin"
-      
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.33 # Use a recent version
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3 # Use a recent version
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH # Add Go bin to PATH
+
       - name: Generate Go Modules
         run: |
           export MODULE_PREFIX="github.com/${{ github.repository }}"
-          export PATH="$PATH:$(go env GOPATH)/bin"
+          # Set PROTO_DIR_ENV to point to the location of .proto files
+          # within the 'temp_protobuf_checkout' directory.
+          # If your .proto files are in 'proto/' inside the 'protobuf' branch:
+          export PROTO_DIR_ENV="temp_protobuf_checkout/proto"
           bash ./scripts/generate-go-proto.sh
-      
-      - name: Check for changes
+        env:
+          # GITHUB_REPOSITORY is in format owner/repo
+          MODULE_PREFIX: github.com/${{ github.repository }}
+
+
+      - name: Check for changes in generated Go files
         id: git-check
         run: |
-          # First generate a status of what would be added with the force flag
-          git add -f -n go/ > /dev/null
-          # Check if there are any changes
-          if git diff --cached --quiet; then
-            echo "No changes detected in Go files"
+          # Configure git user for diff operations if needed, though usually not for diff.
+          # git config --local user.email "action@github.com"
+          # git config --local user.name "GitHub Action"
+
+          # Add generated files to staging to see if there are any differences
+          git add -N go/ # -N (or --intent-to-add) stages new files to show in diff, but doesn't add content yet
+          git add -f go/ # Force add to overcome .gitignore if 'go/' is ignored, and stage actual changes
+
+          echo "Checking for differences in 'go/' directory..."
+          if git diff --cached --quiet --exit-code; then
+            echo "No changes detected in Go files."
             echo "CHANGES_EXIST=false" >> $GITHUB_ENV
           else
-            echo "Changes detected in Go files"
-            echo "CHANGES_EXIST=true" >> $GITHUB_ENV
-            # Show summary of changes
+            echo "Changes detected in Go files:"
             git diff --cached --stat
+            echo "CHANGES_EXIST=true" >> $GITHUB_ENV
           fi
-          # Reset the staged changes for now
+          # Reset staging area; actual add will happen in commit step
           git reset
-      
-      - name: Commit and Push Changes
+
+      - name: Commit and Push Changes to main branch
         if: env.CHANGES_EXIST == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add -f go/   # Force add even if in .gitignore
-          git commit -m "Auto-generate Go modules from Proto files"
-          git push
+          git add -f go/ # Force add the 'go' directory (in case it's in .gitignore)
+          git commit -m "Auto-generate Go modules from Proto files
+
+          Proto definitions updated on 'protobuf' branch.
+          Commit: ${{ github.event.after }}
+          Triggered by: ${{ github.actor }}"
+          git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
