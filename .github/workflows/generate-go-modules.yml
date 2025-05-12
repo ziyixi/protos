@@ -8,6 +8,7 @@ on:
       - protobuf # Name of your branch with .proto definitions
     paths:
       - 'proto/**' # Adjust if your .proto files are in a different directory on the 'protobuf' branch
+      - .github/workflows/generate-go-modules.yml # Ensure the workflow file itself is included
 
   workflow_dispatch: # Allow manual triggering
 
