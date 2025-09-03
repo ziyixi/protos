@@ -8,6 +8,7 @@ enum TodoApp {
   TODO_APP_DIDA365 = 1;
   TODO_APP_TICKTICK = 2;
   TODO_APP_TODOIST = 3;
+  TODO_APP_NOTION = 4;
 }
 
 enum PopullateTodoMethod {
