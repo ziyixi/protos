@@ -22,6 +22,7 @@ const (
 	DataBaseService_CreateIfNotExist_FullMethodName = "/todofy.DataBaseService/CreateIfNotExist"
 	DataBaseService_Write_FullMethodName            = "/todofy.DataBaseService/Write"
 	DataBaseService_QueryRecent_FullMethodName      = "/todofy.DataBaseService/QueryRecent"
+	DataBaseService_CheckExist_FullMethodName       = "/todofy.DataBaseService/CheckExist"
 )
 
 // DataBaseServiceClient is the client API for DataBaseService service.
@@ -34,6 +35,9 @@ type DataBaseServiceClient interface {
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
 	// Query recent entries in the database.
 	QueryRecent(ctx context.Context, in *QueryRecentRequest, opts ...grpc.CallOption) (*QueryRecentResponse, error)
+	// Check if an entry already exists in the database by hash id,
+	// if so, return the entry.
+	CheckExist(ctx context.Context, in *CheckExistRequest, opts ...grpc.CallOption) (*CheckExistResponse, error)
 }
 
 type dataBaseServiceClient struct {
@@ -71,6 +75,15 @@ func (c *dataBaseServiceClient) QueryRecent(ctx context.Context, in *QueryRecent
 	return out, nil
 }
 
+func (c *dataBaseServiceClient) CheckExist(ctx context.Context, in *CheckExistRequest, opts ...grpc.CallOption) (*CheckExistResponse, error) {
+	out := new(CheckExistResponse)
+	err := c.cc.Invoke(ctx, DataBaseService_CheckExist_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DataBaseServiceServer is the server API for DataBaseService service.
 // All implementations must embed UnimplementedDataBaseServiceServer
 // for forward compatibility
@@ -81,6 +94,9 @@ type DataBaseServiceServer interface {
 	Write(context.Context, *WriteRequest) (*WriteResponse, error)
 	// Query recent entries in the database.
 	QueryRecent(context.Context, *QueryRecentRequest) (*QueryRecentResponse, error)
+	// Check if an entry already exists in the database by hash id,
+	// if so, return the entry.
+	CheckExist(context.Context, *CheckExistRequest) (*CheckExistResponse, error)
 	mustEmbedUnimplementedDataBaseServiceServer()
 }
 
@@ -96,6 +112,9 @@ func (UnimplementedDataBaseServiceServer) Write(context.Context, *WriteRequest) 
 }
 func (UnimplementedDataBaseServiceServer) QueryRecent(context.Context, *QueryRecentRequest) (*QueryRecentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryRecent not implemented")
+}
+func (UnimplementedDataBaseServiceServer) CheckExist(context.Context, *CheckExistRequest) (*CheckExistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckExist not implemented")
 }
 func (UnimplementedDataBaseServiceServer) mustEmbedUnimplementedDataBaseServiceServer() {}
 
@@ -164,6 +183,24 @@ func _DataBaseService_QueryRecent_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DataBaseService_CheckExist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckExistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataBaseServiceServer).CheckExist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DataBaseService_CheckExist_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataBaseServiceServer).CheckExist(ctx, req.(*CheckExistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DataBaseService_ServiceDesc is the grpc.ServiceDesc for DataBaseService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -182,6 +219,10 @@ var DataBaseService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryRecent",
 			Handler:    _DataBaseService_QueryRecent_Handler,
+		},
+		{
+			MethodName: "CheckExist",
+			Handler:    _DataBaseService_CheckExist_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
