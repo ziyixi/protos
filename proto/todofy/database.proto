@@ -30,6 +30,8 @@ message DataBaseSchema {
   google.protobuf.Timestamp created_at = 7;
   // the timestamp of the entry updated.
   google.protobuf.Timestamp updated_at = 8;
+  // a unique hash id for the entry, should be generated from prompt + text.
+  string hash_id = 9;
 }
 
 message WriteRequest {
@@ -66,12 +68,28 @@ message CreateIfNotExistResponse {
   // An empty message.
 }
 
+message CheckExistRequest {
+  // The type of database to use.
+  DatabaseType type = 1;
+  // The hash id to check.
+  string hash_id = 2;
+}
+
+message CheckExistResponse {
+  // The entry if exists.
+  DataBaseSchema entry = 1;
+}
+
+// Service for database operations.
 service DataBaseService {
   // Create a new database.
   rpc CreateIfNotExist(CreateIfNotExistRequest)
-      returns (CreateIfNotExistResponse);
+  returns (CreateIfNotExistResponse);
   // Write to the database.
   rpc Write(WriteRequest) returns (WriteResponse);
   // Query recent entries in the database.
   rpc QueryRecent(QueryRecentRequest) returns (QueryRecentResponse);
+  // Check if an entry already exists in the database by hash id,
+  // if so, return the entry.
+  rpc CheckExist(CheckExistRequest) returns (CheckExistResponse);
 }
