@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "${repo_root}"
+
+staged_proto_files="$(
+  git diff --cached --name-only --diff-filter=ACMR | grep -E '^proto/.*\.proto$' || true
+)"
+
+if [ -z "${staged_proto_files}" ]; then
+  exit 0
+fi
+
+style_pattern='^[[:space:]]*message[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\{[[:space:]]*\}[[:space:]]*$'
+violations=""
+
+while IFS= read -r file; do
+  [ -z "${file}" ] && continue
+  file_violations="$(grep -n -E "${style_pattern}" "${file}" || true)"
+  if [ -n "${file_violations}" ]; then
+    violations="${violations}${file}"$'\n'"${file_violations}"$'\n'
+  fi
+done <<< "${staged_proto_files}"
+
+if [ -n "${violations}" ]; then
+  echo "Proto style check failed: single-line empty messages are not allowed."
+  echo "Use:"
+  echo "  message Foo {"
+  echo "  }"
+  echo
+  printf "%s" "${violations}"
+  exit 1
+fi
+
+if ! command -v protoc >/dev/null 2>&1; then
+  echo "warning: protoc not found; skipping proto compile check." >&2
+  exit 0
+fi
+
+protoc \
+  --proto_path=. \
+  --descriptor_set_out=/tmp/todofy-protos-precommit.pb \
+  proto/todofy/*.proto

@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package todofy;
+option go_package = "github.com/ziyixi/protos/go/todofy";
+
+// Parsed dependency metadata extracted from a task title.
+message ParsedDependencyMetadata {
+  // Stable human-friendly task key.
+  string task_key = 1;
+  // Dependency keys referenced by the task.
+  repeated string dependency_keys = 2;
+  // Whether metadata parsing was successful.
+  bool valid = 3;
+  // Parsing error details when valid is false.
+  string parse_error = 4;
+}
+
+// Normalized Todoist task view used by dependency flows.
+message NormalizedTodoistTask {
+  // Raw Todoist task id.
+  string todoist_task_id = 1;
+  // User-visible task content.
+  string content = 2;
+  // Completion state from Todoist.
+  bool completed = 3;
+  // Current labels on the task.
+  repeated string labels = 4;
+  // Parsed dependency metadata from task content.
+  ParsedDependencyMetadata metadata = 5;
+}
+
+message GetTodoistTaskRequest {
+  string todoist_task_id = 1;
+}
+
+message GetTodoistTaskResponse {
+  NormalizedTodoistTask task = 1;
+}
+
+message ListActiveTodoistTasksRequest {
+}
+
+message ListActiveTodoistTasksResponse {
+  repeated NormalizedTodoistTask tasks = 1;
+}
+
+message UpdateTodoistTaskLabelsRequest {
+  string todoist_task_id = 1;
+  repeated string add_labels = 2;
+  repeated string remove_labels = 3;
+}
+
+message UpdateTodoistTaskLabelsResponse {
+  NormalizedTodoistTask task = 1;
+}
+
+message TodoistWebhookHeader {
+  string key = 1;
+  string value = 2;
+}
+
+message VerifyTodoistWebhookRequest {
+  // Raw request body bytes used for signature verification.
+  bytes raw_body = 1;
+  // Full request headers when available.
+  repeated TodoistWebhookHeader headers = 2;
+  // Optional direct signature input if already extracted by caller.
+  string signature = 3;
+}
+
+message VerifyTodoistWebhookResponse {
+  bool valid = 1;
+  // Short verification reason, such as "ok" or "missing_signature".
+  string reason = 2;
+  // Optional implementation-specific details for logs/debugging.
+  string details = 3;
+}
+
+message EnsureTodoistLabelsRequest {
+  repeated string labels = 1;
+}
+
+message EnsureTodoistLabelFailure {
+  string label = 1;
+  string reason = 2;
+}
+
+message EnsureTodoistLabelsResponse {
+  repeated string existing_labels = 1;
+  repeated string created_labels = 2;
+  repeated EnsureTodoistLabelFailure failures = 3;
+}
+
+// Service for Todoist gateway operations.
+service TodoistService {
+  // Get one task by Todoist task id.
+  rpc GetTask(GetTodoistTaskRequest) returns (GetTodoistTaskResponse);
+  // List active (not completed) tasks.
+  rpc ListActiveTasks(ListActiveTodoistTasksRequest)
+      returns (ListActiveTodoistTasksResponse);
+  // Add/remove labels for a task.
+  rpc UpdateTaskLabels(UpdateTodoistTaskLabelsRequest)
+      returns (UpdateTodoistTaskLabelsResponse);
+  // Verify webhook authenticity.
+  rpc VerifyWebhook(VerifyTodoistWebhookRequest)
+      returns (VerifyTodoistWebhookResponse);
+  // Ensure required labels exist in Todoist.
+  rpc EnsureLabels(EnsureTodoistLabelsRequest)
+      returns (EnsureTodoistLabelsResponse);
+}

@@ -47,6 +47,7 @@ message TodoResponse {
   string message = 2;
 }
 
+// Service for populating todo using different methods, such as email, API, etc.
 service TodoService {
   // Populate the todo using the specified method.
   rpc PopulateTodo(TodoRequest) returns (TodoResponse);

@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package todofy;
+
+import "proto/todofy/todoist.proto";
+
+option go_package = "github.com/ziyixi/protos/go/todofy";
+
+enum DependencyIssueType {
+  DEPENDENCY_ISSUE_TYPE_UNSPECIFIED = 0;
+  DEPENDENCY_ISSUE_TYPE_PARSE_ERROR = 1;
+  DEPENDENCY_ISSUE_TYPE_INVALID_KEY = 2;
+  DEPENDENCY_ISSUE_TYPE_DUPLICATE_KEY = 3;
+  DEPENDENCY_ISSUE_TYPE_BROKEN_REFERENCE = 4;
+  DEPENDENCY_ISSUE_TYPE_CYCLE = 5;
+}
+
+enum TaskReadinessState {
+  TASK_READINESS_STATE_UNSPECIFIED = 0;
+  TASK_READINESS_STATE_READY = 1;
+  TASK_READINESS_STATE_BLOCKED = 2;
+  TASK_READINESS_STATE_COMPLETED = 3;
+  TASK_READINESS_STATE_INVALID = 4;
+}
+
+message DependencyIssue {
+  DependencyIssueType type = 1;
+  // Task key where the issue was detected.
+  string task_key = 2;
+  // Referenced key involved in the issue when relevant.
+  string referenced_task_key = 3;
+  // Raw Todoist task id for correlation.
+  string todoist_task_id = 4;
+  // Human-readable issue details.
+  string message = 5;
+}
+
+message TaskDependencyStatus {
+  string task_key = 1;
+  string todoist_task_id = 2;
+  TaskReadinessState readiness = 3;
+  repeated string unmet_dependency_keys = 4;
+  repeated DependencyIssue issues = 5;
+  // Optional normalized Todoist task snapshot.
+  NormalizedTodoistTask todoist_task = 6;
+}
+
+message ReconcileDependencyGraphRequest {
+}
+
+message ReconcileDependencyGraphResponse {
+  int32 task_count = 1;
+  int32 updated_task_count = 2;
+  repeated DependencyIssue issues = 3;
+  repeated TaskDependencyStatus task_statuses = 4;
+}
+
+message AnalyzeDependencyGraphRequest {
+}
+
+message AnalyzeDependencyGraphResponse {
+  int32 task_count = 1;
+  repeated DependencyIssue issues = 2;
+  repeated TaskDependencyStatus task_statuses = 3;
+}
+
+message BootstrapMissingTaskKeysRequest {
+  // When true, report generated keys without persisting changes.
+  bool dry_run = 1;
+}
+
+message GeneratedTaskKey {
+  string todoist_task_id = 1;
+  string task_key = 2;
+}
+
+message BootstrapMissingTaskKeysResponse {
+  int32 generated_count = 1;
+  repeated GeneratedTaskKey generated_task_keys = 2;
+}
+
+message GetTaskDependencyStatusRequest {
+  // Lookup key. At least one of task_key or todoist_task_id should be set.
+  string task_key = 1;
+  // Fallback lookup id when task_key is unknown.
+  string todoist_task_id = 2;
+}
+
+message GetTaskDependencyStatusResponse {
+  TaskDependencyStatus status = 1;
+}
+
+message ListDependencyIssuesRequest {
+  // Optional filter. Use UNSPECIFIED for all issue types.
+  DependencyIssueType type = 1;
+  // Optional key filter.
+  string task_key = 2;
+}
+
+message ListDependencyIssuesResponse {
+  repeated DependencyIssue issues = 1;
+}
+
+message MarkDependencyGraphDirtyRequest {
+  // Signal source, for example "todoist_webhook".
+  string source = 1;
+  // Free-form reason for marking dirty.
+  string reason = 2;
+  // Optional upstream event id for dedupe/tracing.
+  string webhook_event_id = 3;
+  // Optional affected Todoist task ids.
+  repeated string todoist_task_ids = 4;
+  // Optional affected stable task keys.
+  repeated string task_keys = 5;
+}
+
+message MarkDependencyGraphDirtyResponse {
+  bool accepted = 1;
+}
+
+// Service for dependency graph operations.
+service DependencyService {
+  // Reconcile graph state and persist side effects.
+  rpc ReconcileGraph(ReconcileDependencyGraphRequest)
+      returns (ReconcileDependencyGraphResponse);
+  // Analyze graph state without writes.
+  rpc AnalyzeGraph(AnalyzeDependencyGraphRequest)
+      returns (AnalyzeDependencyGraphResponse);
+  // Generate and persist missing stable task keys.
+  rpc BootstrapMissingTaskKeys(BootstrapMissingTaskKeysRequest)
+      returns (BootstrapMissingTaskKeysResponse);
+  // Get dependency status for one task.
+  rpc GetTaskStatus(GetTaskDependencyStatusRequest)
+      returns (GetTaskDependencyStatusResponse);
+  // List graph issues.
+  rpc ListDependencyIssues(ListDependencyIssuesRequest)
+      returns (ListDependencyIssuesResponse);
+  // Mark graph state dirty from external hints such as webhooks.
+  rpc MarkGraphDirty(MarkDependencyGraphDirtyRequest)
+      returns (MarkDependencyGraphDirtyResponse);
+}
