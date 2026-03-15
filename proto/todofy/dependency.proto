@@ -48,11 +48,21 @@ message TaskDependencyStatus {
 message ReconcileDependencyGraphRequest {
 }
 
+message DependencyWriteFailure {
+  string todoist_task_id = 1;
+  string task_key = 2;
+  string operation = 3;
+  string error_message = 4;
+}
+
 message ReconcileDependencyGraphResponse {
   int32 task_count = 1;
   int32 updated_task_count = 2;
   repeated DependencyIssue issues = 3;
   repeated TaskDependencyStatus task_statuses = 4;
+  bool partial_success = 5;
+  int32 failed_update_count = 6;
+  repeated DependencyWriteFailure write_failures = 7;
 }
 
 message AnalyzeDependencyGraphRequest {
@@ -77,6 +87,9 @@ message GeneratedTaskKey {
 message BootstrapMissingTaskKeysResponse {
   int32 generated_count = 1;
   repeated GeneratedTaskKey generated_task_keys = 2;
+  bool partial_success = 3;
+  int32 failed_update_count = 4;
+  repeated DependencyWriteFailure write_failures = 5;
 }
 
 message GetTaskDependencyStatusRequest {
