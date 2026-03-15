@@ -129,6 +129,11 @@ message MarkDependencyGraphDirtyRequest {
 
 message MarkDependencyGraphDirtyResponse {
   bool accepted = 1;
+  message ExclusionInfo {
+    bool in_exclusion_list = 1;
+    string exclusion_project_id = 2;
+  }
+  ExclusionInfo exclusion_info = 2;
 }
 
 // Service for dependency graph operations.
