@@ -22,6 +22,7 @@ const (
 	DependencyService_ReconcileGraph_FullMethodName           = "/todofy.DependencyService/ReconcileGraph"
 	DependencyService_AnalyzeGraph_FullMethodName             = "/todofy.DependencyService/AnalyzeGraph"
 	DependencyService_BootstrapMissingTaskKeys_FullMethodName = "/todofy.DependencyService/BootstrapMissingTaskKeys"
+	DependencyService_ClearDependencyMetadata_FullMethodName  = "/todofy.DependencyService/ClearDependencyMetadata"
 	DependencyService_GetTaskStatus_FullMethodName            = "/todofy.DependencyService/GetTaskStatus"
 	DependencyService_ListDependencyIssues_FullMethodName     = "/todofy.DependencyService/ListDependencyIssues"
 	DependencyService_MarkGraphDirty_FullMethodName           = "/todofy.DependencyService/MarkGraphDirty"
@@ -37,6 +38,8 @@ type DependencyServiceClient interface {
 	AnalyzeGraph(ctx context.Context, in *AnalyzeDependencyGraphRequest, opts ...grpc.CallOption) (*AnalyzeDependencyGraphResponse, error)
 	// Generate and persist missing stable task keys.
 	BootstrapMissingTaskKeys(ctx context.Context, in *BootstrapMissingTaskKeysRequest, opts ...grpc.CallOption) (*BootstrapMissingTaskKeysResponse, error)
+	// Remove dependency metadata from all active tasks.
+	ClearDependencyMetadata(ctx context.Context, in *ClearDependencyMetadataRequest, opts ...grpc.CallOption) (*ClearDependencyMetadataResponse, error)
 	// Get dependency status for one task.
 	GetTaskStatus(ctx context.Context, in *GetTaskDependencyStatusRequest, opts ...grpc.CallOption) (*GetTaskDependencyStatusResponse, error)
 	// List graph issues.
@@ -80,6 +83,15 @@ func (c *dependencyServiceClient) BootstrapMissingTaskKeys(ctx context.Context, 
 	return out, nil
 }
 
+func (c *dependencyServiceClient) ClearDependencyMetadata(ctx context.Context, in *ClearDependencyMetadataRequest, opts ...grpc.CallOption) (*ClearDependencyMetadataResponse, error) {
+	out := new(ClearDependencyMetadataResponse)
+	err := c.cc.Invoke(ctx, DependencyService_ClearDependencyMetadata_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *dependencyServiceClient) GetTaskStatus(ctx context.Context, in *GetTaskDependencyStatusRequest, opts ...grpc.CallOption) (*GetTaskDependencyStatusResponse, error) {
 	out := new(GetTaskDependencyStatusResponse)
 	err := c.cc.Invoke(ctx, DependencyService_GetTaskStatus_FullMethodName, in, out, opts...)
@@ -117,6 +129,8 @@ type DependencyServiceServer interface {
 	AnalyzeGraph(context.Context, *AnalyzeDependencyGraphRequest) (*AnalyzeDependencyGraphResponse, error)
 	// Generate and persist missing stable task keys.
 	BootstrapMissingTaskKeys(context.Context, *BootstrapMissingTaskKeysRequest) (*BootstrapMissingTaskKeysResponse, error)
+	// Remove dependency metadata from all active tasks.
+	ClearDependencyMetadata(context.Context, *ClearDependencyMetadataRequest) (*ClearDependencyMetadataResponse, error)
 	// Get dependency status for one task.
 	GetTaskStatus(context.Context, *GetTaskDependencyStatusRequest) (*GetTaskDependencyStatusResponse, error)
 	// List graph issues.
@@ -138,6 +152,9 @@ func (UnimplementedDependencyServiceServer) AnalyzeGraph(context.Context, *Analy
 }
 func (UnimplementedDependencyServiceServer) BootstrapMissingTaskKeys(context.Context, *BootstrapMissingTaskKeysRequest) (*BootstrapMissingTaskKeysResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BootstrapMissingTaskKeys not implemented")
+}
+func (UnimplementedDependencyServiceServer) ClearDependencyMetadata(context.Context, *ClearDependencyMetadataRequest) (*ClearDependencyMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClearDependencyMetadata not implemented")
 }
 func (UnimplementedDependencyServiceServer) GetTaskStatus(context.Context, *GetTaskDependencyStatusRequest) (*GetTaskDependencyStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTaskStatus not implemented")
@@ -215,6 +232,24 @@ func _DependencyService_BootstrapMissingTaskKeys_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DependencyService_ClearDependencyMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClearDependencyMetadataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DependencyServiceServer).ClearDependencyMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DependencyService_ClearDependencyMetadata_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DependencyServiceServer).ClearDependencyMetadata(ctx, req.(*ClearDependencyMetadataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DependencyService_GetTaskStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetTaskDependencyStatusRequest)
 	if err := dec(in); err != nil {
@@ -287,6 +322,10 @@ var DependencyService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BootstrapMissingTaskKeys",
 			Handler:    _DependencyService_BootstrapMissingTaskKeys_Handler,
+		},
+		{
+			MethodName: "ClearDependencyMetadata",
+			Handler:    _DependencyService_ClearDependencyMetadata_Handler,
 		},
 		{
 			MethodName: "GetTaskStatus",
