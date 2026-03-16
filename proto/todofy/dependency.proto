@@ -92,6 +92,27 @@ message BootstrapMissingTaskKeysResponse {
   repeated DependencyWriteFailure write_failures = 5;
 }
 
+message ClearDependencyMetadataRequest {
+  // When true, report affected tasks without persisting changes.
+  bool dry_run = 1;
+}
+
+message ClearedTaskMetadata {
+  string todoist_task_id = 1;
+  string task_key = 2;
+  // Task content after dependency metadata removal.
+  string updated_content = 3;
+}
+
+message ClearDependencyMetadataResponse {
+  int32 task_count = 1;
+  int32 updated_task_count = 2;
+  repeated ClearedTaskMetadata cleared_tasks = 3;
+  bool partial_success = 4;
+  int32 failed_update_count = 5;
+  repeated DependencyWriteFailure write_failures = 6;
+}
+
 message GetTaskDependencyStatusRequest {
   // Lookup key. At least one of task_key or todoist_task_id should be set.
   string task_key = 1;
@@ -147,6 +168,9 @@ service DependencyService {
   // Generate and persist missing stable task keys.
   rpc BootstrapMissingTaskKeys(BootstrapMissingTaskKeysRequest)
       returns (BootstrapMissingTaskKeysResponse);
+  // Remove dependency metadata from all active tasks.
+  rpc ClearDependencyMetadata(ClearDependencyMetadataRequest)
+      returns (ClearDependencyMetadataResponse);
   // Get dependency status for one task.
   rpc GetTaskStatus(GetTaskDependencyStatusRequest)
       returns (GetTaskDependencyStatusResponse);
