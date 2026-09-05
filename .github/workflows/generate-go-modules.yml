@@ -28,14 +28,19 @@ jobs:
       - name: Checkout protobuf branch for .proto files
         uses: actions/checkout@v4
         with:
-          ref: protobuf # The branch where your .proto files are
+          # Pin push builds to their triggering source commit. Manual runs use protobuf.
+          ref: ${{ github.event_name == 'push' && github.sha || 'protobuf' }}
           path: temp_protobuf_checkout # Checkout into a temporary subdirectory
           # token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21' # Specify your Go version
+          go-version-file: go/todofy/go.mod
+          cache-dependency-path: go/todofy/go.sum
+
+      - name: Record proto source revision
+        run: echo "PROTO_SOURCE_SHA=$(git -C temp_protobuf_checkout rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Install Protoc
         run: |
@@ -62,6 +67,19 @@ jobs:
           # GITHUB_REPOSITORY is in format owner/repo, MODULE_PREFIX needs the host.
           MODULE_PREFIX: github.com/${{ github.repository }}
 
+
+      - name: Verify generated Go modules before publishing
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' module; do
+            (
+              cd "$(dirname "$module")"
+              go mod verify
+              go test ./...
+              go vet ./...
+              go build ./...
+            )
+          done < <(find go -name go.mod -print0)
 
       - name: Check for changes in generated Go files
         id: git-check
@@ -95,7 +113,7 @@ jobs:
           git commit -m "Auto-generate Go modules from Proto files
 
           Proto definitions updated on 'protobuf' branch.
-          Commit: ${{ github.event.after }}
+          Commit: ${PROTO_SOURCE_SHA}
           Triggered by: ${{ github.actor }}"
           git push origin main
         env:
