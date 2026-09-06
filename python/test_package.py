@@ -72,9 +72,15 @@ class PublishedPackageTests(unittest.TestCase):
         run = pb.CollectionRun(id="run", usage=summary)
         run.workflow.definition_hash = "a" * 64
         run.workflow.nodes.add(id="research", type="research", state="succeeded")
+        repair = run.workflow.continuations.add(
+            id="editorial-repair", definition_hash="b" * 64, state="running"
+        )
+        repair.nodes.add(id="revision", type="revision", state="running")
         self.assertEqual(pb.CollectionRun.FromString(run.SerializeToString()), run)
         value = json_format.MessageToDict(run, preserving_proto_field_name=True)
         self.assertEqual(value["usage"]["usage"]["total_tokens"], "1280")
+        self.assertEqual(value["workflow"]["definition_hash"], "a" * 64)
+        self.assertEqual(value["workflow"]["continuations"][0]["definition_hash"], "b" * 64)
         self.assertEqual(json_format.ParseDict(value, pb.CollectionRun()), run)
         candidate = pb.Candidate(id="lead", provenance="crossref_metadata", access_scope="metadata")
         task = pb.ResearchTask(id="research-lead", candidate_ids=[candidate.id], priority=1)

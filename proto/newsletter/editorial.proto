@@ -91,6 +91,8 @@ message WorkflowProgress {
   repeated WorkflowNodeStatus nodes = 4;
   uint32 candidate_count = 5;
   uint32 research_count = 6;
+  // Audited, separately frozen continuations; never rewrite the original graph.
+  repeated WorkflowProgress continuations = 7;
 }
 
 // Provider counters, not an estimate of billed cost or context size. Cached input
