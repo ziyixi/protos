@@ -47,6 +47,7 @@ message CollectionRun {
   bool is_fixture = 10;
   WorkflowProgress workflow = 11;
   UsageSummary usage = 12;
+  PublicationSummary publication = 13;
 }
 
 // Discovery metadata is a lead, never a verified research packet.
@@ -193,6 +194,35 @@ message Chart {
 message RecommendedReading {
   string citation = 1;
   string reason = 2;
+  // The primary reading link stays singular; facts may need additional evidence.
+  repeated string supporting_citations = 3;
+}
+
+// An independently reviewed, self-contained topic. Optional reading/chart parts
+// may be withheld without removing the approved body or another topic.
+message StoryContent {
+  string story_id = 1;
+  string title = 2;
+  string kind = 3; // world, feature, context.
+  repeated Paragraph paragraphs = 4;
+  string limitations = 5;
+  RecommendedReading recommended_reading = 6;
+  Chart chart = 7;
+}
+
+message StoryCoverage {
+  string story_id = 1;
+  string title = 2;
+  repeated string candidate_ids = 3;
+  string disposition = 4; // deep, brief, watch, deferred.
+  string reason = 5;
+  uint32 priority = 6;
+}
+
+message PublicationSummary {
+  string mode = 1; // complete, partial: delivery status is a separate concern.
+  string reason = 2;
+  repeated StoryCoverage stories = 3;
 }
 
 message Draft {
@@ -263,6 +293,7 @@ message Edition {
   bool is_fixture = 13;
   PersonalDigest personal_digest = 14;
   UsageSummary usage = 15;
+  PublicationSummary publication = 16;
 }
 
 message PrepareEditionRequest {

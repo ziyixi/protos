@@ -103,6 +103,21 @@ class PublishedPackageTests(unittest.TestCase):
             ],
         )
 
+    def test_topic_publication_and_multiple_evidence_links(self):
+        story = pb.StoryContent(story_id="paper", title="A research result", kind="feature")
+        story.paragraphs.add(text="A scoped claim", citations=["paper/source"])
+        story.recommended_reading.citation = "paper/source"
+        story.recommended_reading.reason = "Self-contained explanation"
+        story.recommended_reading.supporting_citations.append("announcement/source")
+        self.assertEqual(pb.StoryContent.FromString(story.SerializeToString()), story)
+        run = pb.CollectionRun(id="daily")
+        run.publication.mode = "partial"
+        run.publication.stories.add(story_id="paper", disposition="brief", priority=1)
+        edition = pb.Edition(id="edition", publication=run.publication)
+        value = json_format.MessageToDict(edition, preserving_proto_field_name=True)
+        self.assertEqual(json_format.ParseDict(value, pb.Edition()), edition)
+        self.assertEqual(edition.publication.stories[0].disposition, "brief")
+
 
 if __name__ == "__main__":
     unittest.main()
