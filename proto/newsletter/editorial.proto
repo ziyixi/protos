@@ -45,6 +45,69 @@ message CollectionRun {
   string created_at = 8;
   string updated_at = 9;
   bool is_fixture = 10;
+  WorkflowProgress workflow = 11;
+  UsageSummary usage = 12;
+}
+
+// Discovery metadata is a lead, never a verified research packet.
+message Candidate {
+  string id = 1;
+  string direction = 2;
+  string title = 3;
+  string url = 4;
+  string doi = 5;
+  string version = 6;
+  string event_key = 7;
+  string published_at = 8;
+  string summary = 9;
+  string why_now = 10;
+  string access_scope = 11;
+  string provenance = 12;
+}
+
+message ResearchTask {
+  string id = 1;
+  repeated string candidate_ids = 2;
+  string question = 3;
+  string why = 4;
+  uint32 priority = 5;
+  string evidence_context = 6;
+  repeated string source_urls = 7;
+}
+
+message WorkflowNodeStatus {
+  string id = 1;
+  string type = 2;
+  string state = 3;
+  uint32 completed_items = 4;
+  uint32 failed_items = 5;
+  string error_code = 6;
+}
+
+message WorkflowProgress {
+  string id = 1;
+  string definition_hash = 2;
+  string state = 3;
+  repeated WorkflowNodeStatus nodes = 4;
+  uint32 candidate_count = 5;
+  uint32 research_count = 6;
+}
+
+// Provider counters, not an estimate of billed cost or context size. Cached input
+// and reasoning output are subsets; do not add them to total a second time.
+message TokenCounts {
+  uint64 input_tokens = 1;
+  uint64 cached_input_tokens = 2;
+  uint64 output_tokens = 3;
+  uint64 reasoning_output_tokens = 4;
+  uint64 total_tokens = 5;
+}
+
+message UsageSummary {
+  TokenCounts usage = 1; // Absence means unavailable, never an observed zero.
+  uint32 invocations = 2;
+  uint32 missing_invocations = 3;
+  bool partial = 4;
 }
 
 message Source {
@@ -151,6 +214,7 @@ message RenderEditionRequest {
   string issue_date = 3;
   bool is_fixture = 4;
   PersonalDigest personal_digest = 5;
+  UsageSummary usage = 6;
 }
 
 // Host-fetched private material: never part of an LLM draft or public-source packet.
@@ -196,6 +260,7 @@ message Edition {
   string updated_at = 12;
   bool is_fixture = 13;
   PersonalDigest personal_digest = 14;
+  UsageSummary usage = 15;
 }
 
 message PrepareEditionRequest {

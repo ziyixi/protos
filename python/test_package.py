@@ -60,6 +60,26 @@ class PublishedPackageTests(unittest.TestCase):
         point.missing_reason = "not reported"
         self.assertFalse(point.HasField("decimal_value"))
 
+    def test_workflow_and_usage_contracts(self):
+        summary = pb.UsageSummary(invocations=2, missing_invocations=1, partial=True)
+        self.assertFalse(summary.HasField("usage"))
+        summary.usage.total_tokens = 0
+        self.assertTrue(summary.HasField("usage"))
+        summary.usage.input_tokens = 1200
+        summary.usage.cached_input_tokens = 1000
+        summary.usage.output_tokens = 80
+        summary.usage.total_tokens = 1280
+        run = pb.CollectionRun(id="run", usage=summary)
+        run.workflow.definition_hash = "a" * 64
+        run.workflow.nodes.add(id="research", type="research", state="succeeded")
+        self.assertEqual(pb.CollectionRun.FromString(run.SerializeToString()), run)
+        value = json_format.MessageToDict(run, preserving_proto_field_name=True)
+        self.assertEqual(value["usage"]["usage"]["total_tokens"], "1280")
+        self.assertEqual(json_format.ParseDict(value, pb.CollectionRun()), run)
+        candidate = pb.Candidate(id="lead", provenance="crossref_metadata", access_scope="metadata")
+        task = pb.ResearchTask(id="research-lead", candidate_ids=[candidate.id], priority=1)
+        self.assertEqual(task.candidate_ids, ["lead"])
+
     def test_contract_namespace_and_methods(self):
         self.assertEqual(pb.DESCRIPTOR.package, "newsletter.v1")
         service = pb.DESCRIPTOR.services_by_name["NewsletterService"]

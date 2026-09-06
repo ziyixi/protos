@@ -86,3 +86,10 @@ Go and Python jobs are independent. Adding newsletter also generates the new Go
 module; its initial runtime pins are copied from the already-tested Todofy module
 before the existing Go verification gate. Todofy's module path and consumer pin
 are not changed by publishing the Python variant.
+# Newsletter workflow contracts
+
+`proto/newsletter/editorial.proto` also defines unverified discovery candidates,
+research tasks, read-only DAG progress, and provider-reported token usage. Workflow
+definitions and instructions remain in the newsletter service repository; protobuf
+describes data, not executable workflow logic. Missing usage is distinct from zero.
+Cached input and reasoning output are subsets, not additional tokens to sum.
