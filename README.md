@@ -65,6 +65,11 @@ from ziyixi_protos.newsletter import editorial_pb2
 
 Python generation uses protoc 36.0, uv 0.12.10 and setuptools 84.0.0. The generated
 package requires protobuf >=7.36.0,<8; consumers lock their tested runtime version.
+
+Newsletter discovery candidates also carry optional author/affiliation/venue,
+publication status, specific contribution, source-selection rationale and consulted
+public URLs. These are unverified discovery context, not article approval. Empty
+fields preserve old candidates and non-research events; no existing field was renumbered.
 No gRPC client/server or application logic is included. Existing proto package,
 Go options and source paths are unchanged; a virtual generation path gives Python
 its independent namespace without patching generated imports.

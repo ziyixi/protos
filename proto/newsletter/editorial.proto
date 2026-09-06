@@ -64,6 +64,18 @@ message Candidate {
   string why_now = 10;
   string access_scope = 11;
   string provenance = 12;
+  // Discovery context, not certification. Unknown/non-research values stay empty.
+  // Existing candidates remain readable; never infer prestige from the URL alone.
+  string authors = 13;
+  string affiliations = 14;
+  string venue = 15;
+  string publication_status = 16;
+  // Specific advance over prior work, distinct from importance of the topic.
+  string contribution = 17;
+  // Why this work/source merits attention; distinguish reputation from evidence.
+  string source_basis = 18;
+  // Public pages actually consulted for the above context, not publication citations.
+  repeated string evidence_urls = 19;
 }
 
 message ResearchTask {

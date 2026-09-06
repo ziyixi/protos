@@ -103,6 +103,30 @@ class PublishedPackageTests(unittest.TestCase):
             ],
         )
 
+    def test_candidate_research_context_is_additive_and_round_trips(self):
+        legacy = pb.Candidate(id="old-lead", title="Existing discovery")
+        old_bytes = legacy.SerializeToString()
+        restored = pb.Candidate.FromString(old_bytes)
+        for name in (
+            "authors", "affiliations", "venue", "publication_status",
+            "contribution", "source_basis",
+        ):
+            self.assertEqual(getattr(restored, name), "")
+        self.assertEqual(list(restored.evidence_urls), [])
+        self.assertEqual(restored.SerializeToString(), old_bytes)
+        current = pb.Candidate(
+            id="research-lead", authors="Example authors", affiliations="Example lab",
+            venue="Example proceedings", publication_status="accepted",
+            contribution="A new comparison against the prior method",
+            source_basis="Proceedings list the work; this is not independent replication",
+            evidence_urls=["https://example.org/proceedings/paper"],
+        )
+        value = json_format.MessageToDict(current, preserving_proto_field_name=True)
+        self.assertEqual(json_format.ParseDict(value, pb.Candidate()), current)
+        self.assertEqual(pb.Candidate.FromString(current.SerializeToString()), current)
+        self.assertEqual(pb.Candidate.DESCRIPTOR.fields_by_name["provenance"].number, 12)
+        self.assertEqual(pb.Candidate.DESCRIPTOR.fields_by_name["evidence_urls"].number, 19)
+
     def test_topic_publication_and_multiple_evidence_links(self):
         story = pb.StoryContent(story_id="paper", title="A research result", kind="feature")
         story.paragraphs.add(text="A scoped claim", citations=["paper/source"])
