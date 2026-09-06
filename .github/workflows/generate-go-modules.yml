@@ -12,6 +12,10 @@ on:
 
   workflow_dispatch: # Allow manual triggering
 
+concurrency:
+  group: generated-go-main
+  cancel-in-progress: false
+
 jobs:
   generate-go-modules:
     runs-on: ubuntu-latest
@@ -52,6 +56,14 @@ jobs:
           go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.33 # Use a recent version
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3 # Use a recent version
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH # Add Go bin to PATH
+
+      - name: Seed new newsletter module with tested Go runtime versions
+        run: |
+          if [ -f temp_protobuf_checkout/proto/newsletter/editorial.proto ] && [ ! -f go/newsletter/go.mod ]; then
+            mkdir -p go/newsletter
+            sed 's#^module github.com/ziyixi/protos/go/todofy$#module github.com/ziyixi/protos/go/newsletter#' go/todofy/go.mod > go/newsletter/go.mod
+            cp go/todofy/go.sum go/newsletter/go.sum
+          fi
 
       - name: Generate Go Modules
         run: |

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ziyixi-protos"
+dynamic = ["version"]
+description = "Generated Python messages from github.com/ziyixi/protos"
+requires-python = ">=3.10"
+dependencies = ["protobuf>=7.36.0,<8"]
+
+[project.urls]
+Repository = "https://github.com/ziyixi/protos"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ziyixi_protos.__version__"}
+
+[tool.setuptools.package-data]
+"ziyixi_protos" = ["py.typed"]
+"ziyixi_protos.newsletter" = ["*.pyi", "provenance.json"]

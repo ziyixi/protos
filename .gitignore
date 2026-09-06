@@ -1,3 +1,8 @@
 # remove generated files
 # go
 go/*
+.artifacts/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/

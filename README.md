@@ -48,6 +48,41 @@ proto_check_dir=$(mktemp -d)
 protoc --proto_path=. --descriptor_set_out="$proto_check_dir/todofy.pb" proto/todofy/*.proto
 ```
 
-The schema is language-neutral. Currently only Go bindings are published by this
-workflow; another language should generate its own bindings from a pinned
-`protobuf` commit, not consume the generated Go module.
+## Publishing and consuming Python bindings
+
+`Publish Python protobuf wheel` builds the exact `protobuf` source commit on
+GitHub Actions and publishes a versioned wheel plus SHA256SUMS as GitHub Release
+assets. It does not use PyPI or write Python artifacts to `main`. Pull requests
+build/test only; publishing has a separate, minimal write-permission job.
+
+The first Python package, `ziyixi-protos`, contains newsletter v1 messages,
+`.pyi` types, `py.typed` and per-domain provenance (source commit/hash, compiler,
+package version, generated files and descriptor hashes). Import with:
+
+```python
+from ziyixi_protos.newsletter import editorial_pb2
+```
+
+Python generation uses protoc 36.0, uv 0.12.10 and setuptools 84.0.0. The generated
+package requires protobuf >=7.36.0,<8; consumers lock their tested runtime version.
+No gRPC client/server or application logic is included. Existing proto package,
+Go options and source paths are unchanged; a virtual generation path gives Python
+its independent namespace without patching generated imports.
+
+Each workflow run gets `0.1.0.dev<run-number>` and release tag `python-v<version>`.
+Pin both the exact version and its release wheel URL in the consumer's uv config,
+commit `uv.lock`, and install with `uv sync --locked`. Do not use a `latest` URL,
+an expiring Actions artifact, a sibling checkout or startup-time generation.
+The consumer needs neither protoc nor GitHub credentials for these public assets.
+New releases do not automatically upgrade existing consumers.
+
+Local generation/testing uses `python/build.py --version 0.1.0.dev0
+--source-commit <40-character-source-sha> --output <fresh-output-dir>`, with pinned
+protoc, uv and a compatible protobuf runtime explicitly installed. Test the built
+wheel in a fresh environment using `python/test_package.py`; never publish a local
+build as if it were the verified Actions output.
+
+Go and Python jobs are independent. Adding newsletter also generates the new Go
+module; its initial runtime pins are copied from the already-tested Todofy module
+before the existing Go verification gate. Todofy's module path and consumer pin
+are not changed by publishing the Python variant.

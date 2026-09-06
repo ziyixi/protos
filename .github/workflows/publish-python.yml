@@ -1,0 +1,88 @@
+name: Publish Python protobuf wheel
+
+on:
+  push:
+    branches: [protobuf]
+    paths: ['proto/**', 'python/**', '.github/workflows/publish-python.yml']
+  pull_request:
+    branches: [protobuf]
+    paths: ['proto/**', 'python/**', '.github/workflows/publish-python.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-proto-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  wheel:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: '0.12.10'
+      - name: Install verified protoc 36.0
+        run: |
+          curl --fail --location --retry 2 -o "$RUNNER_TEMP/protoc.zip" https://github.com/protocolbuffers/protobuf/releases/download/v36.0/protoc-36.0-linux-x86_64.zip
+          echo "bc8211ce760bd43ee21ddc145d6d9dbaeeabae205267a79d9054a240e367d4b4  $RUNNER_TEMP/protoc.zip" | sha256sum --check
+          unzip -q "$RUNNER_TEMP/protoc.zip" -d "$RUNNER_TEMP/protoc"
+          echo "$RUNNER_TEMP/protoc/bin" >> "$GITHUB_PATH"
+      - name: Release identity
+        id: identity
+        run: echo "version=0.1.0.dev${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+      - name: Generate and build exact source revision
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          uv run --no-project --python 3.12 --with protobuf==7.36.1 python python/build.py \
+            --version '${{ steps.identity.outputs.version }}' --source-commit "$GITHUB_SHA" --output dist
+      - name: Install and test the wheel outside the checkout
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          uv venv "$RUNNER_TEMP/wheel-test"
+          uv pip install --python "$RUNNER_TEMP/wheel-test/bin/python" protobuf==7.36.1 dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/wheel-test/bin/python" "$GITHUB_WORKSPACE/python/test_package.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-wheel
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/protobuf'
+    needs: wheel
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-wheel
+          path: dist
+      - name: Publish versioned wheel to GitHub Release (never PyPI)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.wheel.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="python-v${VERSION}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            # A rerun may verify existing immutable bytes, never replace them.
+            gh release download "$tag" --dir "$RUNNER_TEMP/published"
+            for file in dist/*; do cmp "$file" "$RUNNER_TEMP/published/$(basename "$file")"; done
+          else
+            gh release create "$tag" dist/* --target "$GITHUB_SHA" --latest=false \
+              --title "Python proto ${VERSION}" \
+              --notes "Generated from protobuf source ${GITHUB_SHA}. Install the wheel with uv and retain its locked SHA256. No PyPI publishing."
+          fi

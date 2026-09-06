@@ -1,0 +1,215 @@
+syntax = "proto3";
+
+package newsletter.v1;
+option go_package = "github.com/ziyixi/protos/go/newsletter;newsletterpb";
+
+// One application service. Render is pure; the other methods own durable state.
+service NewsletterService {
+  rpc StartRun(StartRunRequest) returns (CollectionRun);
+  rpc GetRun(GetRunRequest) returns (CollectionRun);
+  rpc PutPacket(PutPacketRequest) returns (Packet);
+  rpc ReadInbox(ReadInboxRequest) returns (ReadInboxResponse);
+  rpc PrepareEdition(PrepareEditionRequest) returns (Edition);
+  rpc GetEdition(GetEditionRequest) returns (Edition);
+  rpc RenderEdition(RenderEditionRequest) returns (RenderedEdition);
+  rpc SendEdition(SendEditionRequest) returns (Edition);
+}
+
+// External trigger only. Instructions are selected/snapshotted by the server,
+// never supplied as paths or prompts by an HTTP caller. This never sends mail.
+message StartRunRequest {
+  string request_key = 1;
+  string issue_date = 2;
+}
+
+message GetRunRequest {
+  string id = 1;
+}
+
+message CollectionDirection {
+  string id = 1;
+  string instruction_hash = 2;
+  string state = 3; // queued, collecting, collected, no_findings, failed.
+  repeated string packet_ids = 4;
+  string note = 5;
+}
+
+message CollectionRun {
+  string id = 1;
+  string issue_date = 2;
+  string state = 3; // queued, collecting, projecting, editing, ready, blocked, failed.
+  string instructions_hash = 4;
+  repeated CollectionDirection directions = 5;
+  string edition_id = 6;
+  string error_code = 7;
+  string created_at = 8;
+  string updated_at = 9;
+  bool is_fixture = 10;
+}
+
+message Source {
+  string id = 1;
+  string title = 2;
+  string url = 3;
+  string excerpt = 4;
+  // metadata, abstract, full_text, dataset. Access is reported, not certified.
+  string access_scope = 5;
+  string published_at = 6;
+}
+
+message PacketBody {
+  string title = 1;
+  string body = 2;
+  repeated Source sources = 3;
+  repeated string tags = 4;
+}
+
+message Packet {
+  string id = 1;
+  string workflow_id = 2;
+  string producer_id = 3;
+  string content_hash = 4;
+  string created_at = 5;
+  bool is_fixture = 6;
+  PacketBody content = 7;
+}
+
+message PutPacketRequest {
+  string request_key = 1;
+  string workflow_id = 2;
+  PacketBody content = 3;
+}
+
+message ReadInboxRequest {
+  uint32 limit = 1;
+  // Opaque server cursor; clients must not construct it or infer completion.
+  string cursor = 2;
+}
+
+message ReadInboxResponse {
+  repeated Packet packets = 1;
+  string next_cursor = 2;
+}
+
+message Paragraph {
+  string text = 1;
+  // Each citation is packet_id/source_id; both identities are checked locally.
+  repeated string citations = 2;
+}
+
+message Section {
+  string kind = 1; // world, feature, context.
+  string heading = 2;
+  repeated Paragraph paragraphs = 3;
+  string limitations = 4;
+}
+
+message ChartPoint {
+  string label = 1;
+  oneof observation {
+    string decimal_value = 2; // Finite decimal string; never NaN/Infinity.
+    string missing_reason = 3; // Missing is explicit, not an implicit zero.
+  }
+  repeated string citations = 4;
+}
+
+message Chart {
+  string kind = 1; // bar, line.
+  string question = 2;
+  string metric = 3;
+  string unit = 4;
+  string period = 5;
+  string caption = 6;
+  string alt_text = 7;
+  string limitations = 8;
+  repeated ChartPoint points = 9;
+}
+
+message RecommendedReading {
+  string citation = 1;
+  string reason = 2;
+}
+
+message Draft {
+  string subject = 1;
+  string title = 2;
+  string introduction = 3;
+  repeated Section sections = 4;
+  Chart chart = 5;
+  RecommendedReading recommended_reading = 6;
+  string limitations = 7;
+}
+
+message Review {
+  bool passed = 1;
+  repeated string findings = 2;
+}
+
+message RenderEditionRequest {
+  Draft draft = 1;
+  repeated Packet packets = 2;
+  string issue_date = 3;
+  bool is_fixture = 4;
+  PersonalDigest personal_digest = 5;
+}
+
+// Host-fetched private material: never part of an LLM draft or public-source packet.
+message PersonalDigest {
+  string state = 1; // current, empty, unavailable, disabled.
+  string title = 2;
+  string summary = 3;
+  repeated PersonalEvent items = 4;
+  optional uint32 task_count = 5; // Omitted means unknown, not zero.
+  uint32 time_window_hours = 6;
+  string fetched_at = 7;
+  string source_label = 8;
+  string limitations = 9;
+  bool is_fixture = 10;
+  string error_code = 11;
+}
+
+message PersonalEvent {
+  uint32 rank = 1;
+  string title = 2;
+  string detail = 3;
+}
+
+message RenderedEdition {
+  string html = 1;
+  string text = 2;
+  bytes chart_png = 3;
+  string render_hash = 4;
+}
+
+message Edition {
+  string id = 1;
+  string issue_date = 2;
+  string state = 3; // queued, running, ready, blocked, failed.
+  repeated string packet_ids = 4;
+  Draft draft = 5;
+  Review review = 6;
+  RenderedEdition rendered = 7;
+  string delivery_state = 8;
+  string provider_message_id = 9;
+  string error_code = 10;
+  string created_at = 11;
+  string updated_at = 12;
+  bool is_fixture = 13;
+  PersonalDigest personal_digest = 14;
+}
+
+message PrepareEditionRequest {
+  string request_key = 1;
+  string issue_date = 2;
+  repeated string packet_ids = 3;
+}
+
+message GetEditionRequest {
+  string id = 1;
+}
+
+message SendEditionRequest {
+  string id = 1;
+  string request_key = 2;
+  string expected_render_hash = 3;
+}
