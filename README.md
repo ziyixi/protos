@@ -26,13 +26,17 @@ ordering: todofy uses 3.8 Flash, then 3.7 Flash, then 3.5 Flash-Lite.
 
 ## Publishing and consuming Go bindings
 
-1. Edit and push `.proto` files on `protobuf`.
+1. Propose `.proto` edits in a pull request targeting `protobuf`. Go and Python
+   checks validate the proposed source; neither publishes from a pull request.
+   Merge the validated source to `protobuf` to publish.
 2. The `Generate Go Modules from Proto Files` Action checks out the exact source
    commit, generates bindings, verifies/tests/vets/builds the Go modules, and
    commits generated `go/` files to `main` only after validation succeeds.
 3. Check that the Action succeeded and that its generated `main` commit names
    the source commit. The Action run itself belongs to `protobuf`; the published
    module belongs to `main`. A bot push does not require a second Action run.
+   Go generation runs with read-only permissions; a separate publish job writes
+   only the verified artifact to `main` on authorized `protobuf` runs.
 4. In a Go consumer, pin the generated `main` commit (not the source commit):
 
    ```sh
@@ -98,3 +102,9 @@ research tasks, read-only DAG progress, and provider-reported token usage. Workf
 definitions and instructions remain in the newsletter service repository; protobuf
 describes data, not executable workflow logic. Missing usage is distinct from zero.
 Cached input and reasoning output are subsets, not additional tokens to sum.
+
+Newsletter's network service exposes only `StartRun`, `GetRun`, `GetEdition`,
+and `SendEdition`. Manual packet submission, inbox reads, direct edition
+preparation, and standalone rendering RPCs are retired. Their message definitions
+and field numbers remain available for historical binary/JSON payloads. Recovery
+and verification sends belong to the Newsletter operator CLI, not new RPCs.

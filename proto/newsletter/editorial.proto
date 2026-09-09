@@ -3,15 +3,12 @@ syntax = "proto3";
 package newsletter.v1;
 option go_package = "github.com/ziyixi/protos/go/newsletter;newsletterpb";
 
-// One application service. Render is pure; the other methods own durable state.
+// Scheduled collection, frozen edition inspection, and guarded delivery only.
+// Administrative recovery is a local CLI operation, not a network capability.
 service NewsletterService {
   rpc StartRun(StartRunRequest) returns (CollectionRun);
   rpc GetRun(GetRunRequest) returns (CollectionRun);
-  rpc PutPacket(PutPacketRequest) returns (Packet);
-  rpc ReadInbox(ReadInboxRequest) returns (ReadInboxResponse);
-  rpc PrepareEdition(PrepareEditionRequest) returns (Edition);
   rpc GetEdition(GetEditionRequest) returns (Edition);
-  rpc RenderEdition(RenderEditionRequest) returns (RenderedEdition);
   rpc SendEdition(SendEditionRequest) returns (Edition);
 }
 
@@ -152,12 +149,14 @@ message Packet {
   PacketBody content = 7;
 }
 
+// Retained for historical payload decoding; the submission RPC is retired.
 message PutPacketRequest {
   string request_key = 1;
   string workflow_id = 2;
   PacketBody content = 3;
 }
 
+// Retained for historical payload decoding; the inbox RPC is retired.
 message ReadInboxRequest {
   uint32 limit = 1;
   // Opaque server cursor; clients must not construct it or infer completion.
@@ -252,6 +251,8 @@ message Review {
   repeated string findings = 2;
 }
 
+// Retained for historical payload decoding and internal rendering data.
+// No standalone rendering RPC is exposed.
 message RenderEditionRequest {
   Draft draft = 1;
   repeated Packet packets = 2;
@@ -308,6 +309,7 @@ message Edition {
   PublicationSummary publication = 16;
 }
 
+// Retained for historical payload decoding; direct preparation is retired.
 message PrepareEditionRequest {
   string request_key = 1;
   string issue_date = 2;

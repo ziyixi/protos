@@ -94,14 +94,30 @@ class PublishedPackageTests(unittest.TestCase):
             [
                 "StartRun",
                 "GetRun",
-                "PutPacket",
-                "ReadInbox",
-                "PrepareEdition",
                 "GetEdition",
-                "RenderEdition",
                 "SendEdition",
             ],
         )
+
+    def test_retired_rpc_messages_preserve_historical_wire_payloads(self):
+        messages = [
+            pb.PutPacketRequest(request_key="old-key", workflow_id="old-flow"),
+            pb.ReadInboxRequest(limit=5, cursor="old-cursor"),
+            pb.ReadInboxResponse(next_cursor="old-cursor"),
+            pb.PrepareEditionRequest(
+                request_key="old-key", issue_date="2026-09-05", packet_ids=["old-packet"]
+            ),
+            pb.RenderEditionRequest(issue_date="2026-09-05", is_fixture=True),
+            pb.RenderedEdition(html="<p>Frozen</p>", render_hash="old-hash"),
+        ]
+        for message in messages:
+            with self.subTest(message=message.DESCRIPTOR.full_name):
+                self.assertEqual(type(message).FromString(message.SerializeToString()), message)
+                value = json_format.MessageToDict(message, preserving_proto_field_name=True)
+                self.assertEqual(json_format.ParseDict(value, type(message)()), message)
+        self.assertEqual(pb.PutPacketRequest.DESCRIPTOR.fields_by_name["content"].number, 3)
+        self.assertEqual(pb.PrepareEditionRequest.DESCRIPTOR.fields_by_name["packet_ids"].number, 3)
+        self.assertEqual(pb.RenderEditionRequest.DESCRIPTOR.fields_by_name["usage"].number, 6)
 
     def test_candidate_research_context_is_additive_and_round_trips(self):
         legacy = pb.Candidate(id="old-lead", title="Existing discovery")
