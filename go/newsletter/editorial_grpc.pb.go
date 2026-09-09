@@ -19,14 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	NewsletterService_StartRun_FullMethodName       = "/newsletter.v1.NewsletterService/StartRun"
-	NewsletterService_GetRun_FullMethodName         = "/newsletter.v1.NewsletterService/GetRun"
-	NewsletterService_PutPacket_FullMethodName      = "/newsletter.v1.NewsletterService/PutPacket"
-	NewsletterService_ReadInbox_FullMethodName      = "/newsletter.v1.NewsletterService/ReadInbox"
-	NewsletterService_PrepareEdition_FullMethodName = "/newsletter.v1.NewsletterService/PrepareEdition"
-	NewsletterService_GetEdition_FullMethodName     = "/newsletter.v1.NewsletterService/GetEdition"
-	NewsletterService_RenderEdition_FullMethodName  = "/newsletter.v1.NewsletterService/RenderEdition"
-	NewsletterService_SendEdition_FullMethodName    = "/newsletter.v1.NewsletterService/SendEdition"
+	NewsletterService_StartRun_FullMethodName    = "/newsletter.v1.NewsletterService/StartRun"
+	NewsletterService_GetRun_FullMethodName      = "/newsletter.v1.NewsletterService/GetRun"
+	NewsletterService_GetEdition_FullMethodName  = "/newsletter.v1.NewsletterService/GetEdition"
+	NewsletterService_SendEdition_FullMethodName = "/newsletter.v1.NewsletterService/SendEdition"
 )
 
 // NewsletterServiceClient is the client API for NewsletterService service.
@@ -35,11 +31,7 @@ const (
 type NewsletterServiceClient interface {
 	StartRun(ctx context.Context, in *StartRunRequest, opts ...grpc.CallOption) (*CollectionRun, error)
 	GetRun(ctx context.Context, in *GetRunRequest, opts ...grpc.CallOption) (*CollectionRun, error)
-	PutPacket(ctx context.Context, in *PutPacketRequest, opts ...grpc.CallOption) (*Packet, error)
-	ReadInbox(ctx context.Context, in *ReadInboxRequest, opts ...grpc.CallOption) (*ReadInboxResponse, error)
-	PrepareEdition(ctx context.Context, in *PrepareEditionRequest, opts ...grpc.CallOption) (*Edition, error)
 	GetEdition(ctx context.Context, in *GetEditionRequest, opts ...grpc.CallOption) (*Edition, error)
-	RenderEdition(ctx context.Context, in *RenderEditionRequest, opts ...grpc.CallOption) (*RenderedEdition, error)
 	SendEdition(ctx context.Context, in *SendEditionRequest, opts ...grpc.CallOption) (*Edition, error)
 }
 
@@ -69,45 +61,9 @@ func (c *newsletterServiceClient) GetRun(ctx context.Context, in *GetRunRequest,
 	return out, nil
 }
 
-func (c *newsletterServiceClient) PutPacket(ctx context.Context, in *PutPacketRequest, opts ...grpc.CallOption) (*Packet, error) {
-	out := new(Packet)
-	err := c.cc.Invoke(ctx, NewsletterService_PutPacket_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *newsletterServiceClient) ReadInbox(ctx context.Context, in *ReadInboxRequest, opts ...grpc.CallOption) (*ReadInboxResponse, error) {
-	out := new(ReadInboxResponse)
-	err := c.cc.Invoke(ctx, NewsletterService_ReadInbox_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *newsletterServiceClient) PrepareEdition(ctx context.Context, in *PrepareEditionRequest, opts ...grpc.CallOption) (*Edition, error) {
-	out := new(Edition)
-	err := c.cc.Invoke(ctx, NewsletterService_PrepareEdition_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *newsletterServiceClient) GetEdition(ctx context.Context, in *GetEditionRequest, opts ...grpc.CallOption) (*Edition, error) {
 	out := new(Edition)
 	err := c.cc.Invoke(ctx, NewsletterService_GetEdition_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *newsletterServiceClient) RenderEdition(ctx context.Context, in *RenderEditionRequest, opts ...grpc.CallOption) (*RenderedEdition, error) {
-	out := new(RenderedEdition)
-	err := c.cc.Invoke(ctx, NewsletterService_RenderEdition_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,11 +85,7 @@ func (c *newsletterServiceClient) SendEdition(ctx context.Context, in *SendEditi
 type NewsletterServiceServer interface {
 	StartRun(context.Context, *StartRunRequest) (*CollectionRun, error)
 	GetRun(context.Context, *GetRunRequest) (*CollectionRun, error)
-	PutPacket(context.Context, *PutPacketRequest) (*Packet, error)
-	ReadInbox(context.Context, *ReadInboxRequest) (*ReadInboxResponse, error)
-	PrepareEdition(context.Context, *PrepareEditionRequest) (*Edition, error)
 	GetEdition(context.Context, *GetEditionRequest) (*Edition, error)
-	RenderEdition(context.Context, *RenderEditionRequest) (*RenderedEdition, error)
 	SendEdition(context.Context, *SendEditionRequest) (*Edition, error)
 	mustEmbedUnimplementedNewsletterServiceServer()
 }
@@ -148,20 +100,8 @@ func (UnimplementedNewsletterServiceServer) StartRun(context.Context, *StartRunR
 func (UnimplementedNewsletterServiceServer) GetRun(context.Context, *GetRunRequest) (*CollectionRun, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRun not implemented")
 }
-func (UnimplementedNewsletterServiceServer) PutPacket(context.Context, *PutPacketRequest) (*Packet, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PutPacket not implemented")
-}
-func (UnimplementedNewsletterServiceServer) ReadInbox(context.Context, *ReadInboxRequest) (*ReadInboxResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReadInbox not implemented")
-}
-func (UnimplementedNewsletterServiceServer) PrepareEdition(context.Context, *PrepareEditionRequest) (*Edition, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PrepareEdition not implemented")
-}
 func (UnimplementedNewsletterServiceServer) GetEdition(context.Context, *GetEditionRequest) (*Edition, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEdition not implemented")
-}
-func (UnimplementedNewsletterServiceServer) RenderEdition(context.Context, *RenderEditionRequest) (*RenderedEdition, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RenderEdition not implemented")
 }
 func (UnimplementedNewsletterServiceServer) SendEdition(context.Context, *SendEditionRequest) (*Edition, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendEdition not implemented")
@@ -215,60 +155,6 @@ func _NewsletterService_GetRun_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NewsletterService_PutPacket_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PutPacketRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NewsletterServiceServer).PutPacket(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NewsletterService_PutPacket_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NewsletterServiceServer).PutPacket(ctx, req.(*PutPacketRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NewsletterService_ReadInbox_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadInboxRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NewsletterServiceServer).ReadInbox(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NewsletterService_ReadInbox_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NewsletterServiceServer).ReadInbox(ctx, req.(*ReadInboxRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NewsletterService_PrepareEdition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PrepareEditionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NewsletterServiceServer).PrepareEdition(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NewsletterService_PrepareEdition_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NewsletterServiceServer).PrepareEdition(ctx, req.(*PrepareEditionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _NewsletterService_GetEdition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetEditionRequest)
 	if err := dec(in); err != nil {
@@ -283,24 +169,6 @@ func _NewsletterService_GetEdition_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NewsletterServiceServer).GetEdition(ctx, req.(*GetEditionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NewsletterService_RenderEdition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RenderEditionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NewsletterServiceServer).RenderEdition(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NewsletterService_RenderEdition_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NewsletterServiceServer).RenderEdition(ctx, req.(*RenderEditionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -339,24 +207,8 @@ var NewsletterService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NewsletterService_GetRun_Handler,
 		},
 		{
-			MethodName: "PutPacket",
-			Handler:    _NewsletterService_PutPacket_Handler,
-		},
-		{
-			MethodName: "ReadInbox",
-			Handler:    _NewsletterService_ReadInbox_Handler,
-		},
-		{
-			MethodName: "PrepareEdition",
-			Handler:    _NewsletterService_PrepareEdition_Handler,
-		},
-		{
 			MethodName: "GetEdition",
 			Handler:    _NewsletterService_GetEdition_Handler,
-		},
-		{
-			MethodName: "RenderEdition",
-			Handler:    _NewsletterService_RenderEdition_Handler,
 		},
 		{
 			MethodName: "SendEdition",
