@@ -73,7 +73,7 @@ find "${PROTO_FILES_SEARCH_ROOT}" -name "*.proto" | while read proto_file_full_p
     go_output_rel_dir=$(dirname "${path_inside_proto_root}")
 
     # final_go_out_subdir: The final target directory for the generated Go files for this package.
-    # e.g., "go/todofy" or "go" (if go_output_rel_dir is ".")
+    # e.g., "go/newsletter" or "go" (if go_output_rel_dir is ".")
     final_go_out_subdir="${GO_OUT_DIR}"
     if [ "${go_output_rel_dir}" != "." ]; then
         final_go_out_subdir="${GO_OUT_DIR}/${go_output_rel_dir}"
@@ -87,7 +87,7 @@ find "${PROTO_FILES_SEARCH_ROOT}" -name "*.proto" | while read proto_file_full_p
     # --proto_path is PROTOC_BASE_DIR (e.g., "." or "temp_protobuf_checkout")
     # --go_out is GO_OUT_DIR (e.g., "go")
     # paths=source_relative will cause output to mirror protoc_input_path structure under GO_OUT_DIR.
-    # e.g., if protoc_input_path is "proto/todofy/file.proto", output is in "go/proto/todofy/"
+    # e.g., if protoc_input_path is "proto/newsletter/file.proto", output is in "go/proto/newsletter/"
     protoc \
         --proto_path="${PROTOC_BASE_DIR}" \
         --go_out="${GO_OUT_DIR}" \
@@ -100,12 +100,12 @@ find "${PROTO_FILES_SEARCH_ROOT}" -name "*.proto" | while read proto_file_full_p
 
     # Determine where protoc actually generated files with paths=source_relative.
     # This will be GO_OUT_DIR / (directory part of protoc_input_path).
-    # e.g., "go/proto/todofy" if protoc_input_path was "proto/todofy/file.proto"
+    # e.g., "go/proto/newsletter" if protoc_input_path was "proto/newsletter/file.proto"
     # e.g., "go/proto" if protoc_input_path was "proto/file.proto"
     protoc_generated_files_dir="${GO_OUT_DIR}/$(dirname "${protoc_input_path}")"
 
-    # If protoc generated files into an intermediate path (e.g., "go/proto/todofy")
-    # and this is different from the final desired path (e.g., "go/todofy"), move them.
+    # If protoc generated files into an intermediate path (e.g., "go/proto/newsletter")
+    # and this is different from the final desired path (e.g., "go/newsletter"), move them.
     if [ -d "${protoc_generated_files_dir}" ] && [ "${protoc_generated_files_dir}" != "${final_go_out_subdir}" ]; then
         echo "  Moving generated files from ${protoc_generated_files_dir} to ${final_go_out_subdir}..."
         # Move all files from the source directory to the target.
@@ -114,14 +114,14 @@ find "${PROTO_FILES_SEARCH_ROOT}" -name "*.proto" | while read proto_file_full_p
         find "${protoc_generated_files_dir}" -maxdepth 1 -type f -exec mv -t "${final_go_out_subdir}/" {} +
         
         # Attempt to clean up the (now hopefully empty) directory structure protoc created.
-        # e.g., remove "go/proto/todofy", then try to remove "go/proto" if it's empty.
+        # e.g., remove "go/proto/newsletter", then try to remove "go/proto" if it's empty.
         if [ -d "${protoc_generated_files_dir}" ]; then # Check if it still exists
              rmdir "${protoc_generated_files_dir}" 2>/dev/null || echo "  Note: Directory ${protoc_generated_files_dir} not empty after move, or already removed."
         fi
         
         # Attempt to remove the parent of protoc_generated_files_dir if it's not GO_OUT_DIR itself
         # and if it's part of the "proto/" prefix path.
-        # e.g., if protoc_generated_files_dir was "go/proto/todofy", its parent is "go/proto".
+        # e.g., if protoc_generated_files_dir was "go/proto/newsletter", its parent is "go/proto".
         protoc_intermediate_parent_dir=$(dirname "${protoc_generated_files_dir}")
         if [ "${protoc_intermediate_parent_dir}" != "${GO_OUT_DIR}" ] && [ -d "${protoc_intermediate_parent_dir}" ] && [[ "${protoc_intermediate_parent_dir}" == "${GO_OUT_DIR}/${PROTO_SUBDIR_NAME}"* ]]; then
              rmdir "${protoc_intermediate_parent_dir}" 2>/dev/null || echo "  Note: Directory ${protoc_intermediate_parent_dir} not empty or already removed."
