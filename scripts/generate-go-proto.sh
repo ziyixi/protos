@@ -53,23 +53,23 @@ echo "Searching for .proto files in ${PROTO_FILES_SEARCH_ROOT}..."
 # Find all .proto files recursively
 find "${PROTO_FILES_SEARCH_ROOT}" -name "*.proto" | while read proto_file_full_path; do
     # proto_file_full_path: Full path to the .proto file.
-    # e.g., temp_protobuf_checkout/proto/todofy/database.proto (CI)
-    # or ./proto/todofy/database.proto (local, if PROTOC_BASE_DIR=".")
+    # e.g., temp_protobuf_checkout/proto/newsletter/editorial.proto (CI)
+    # or ./proto/newsletter/editorial.proto (local, if PROTOC_BASE_DIR=".")
 
     # protoc_input_path: Path of the .proto file relative to PROTOC_BASE_DIR.
     # This is what's passed to protoc for compilation and used in M-flags.
-    # e.g., "proto/todofy/database.proto"
+    # e.g., "proto/newsletter/editorial.proto"
     protoc_input_path="${proto_file_full_path#${PROTOC_BASE_DIR}/}"
     protoc_input_path="${protoc_input_path#./}" # Clean up leading "./" if PROTOC_BASE_DIR was "."
 
     # path_inside_proto_root: Path of the .proto file relative to PROTO_FILES_SEARCH_ROOT.
     # Used to determine the subdirectory structure within GO_OUT_DIR.
-    # e.g., "todofy/database.proto" or "database.proto" (if at the root of PROTO_FILES_SEARCH_ROOT)
+    # e.g., "newsletter/editorial.proto" or "database.proto" (if at the root of PROTO_FILES_SEARCH_ROOT)
     path_inside_proto_root="${proto_file_full_path#${PROTO_FILES_SEARCH_ROOT}/}"
     path_inside_proto_root="${path_inside_proto_root#./}" # Clean up leading "./"
 
     # go_output_rel_dir: The relative directory structure for the Go package.
-    # e.g., "todofy" or "." (if the .proto file is at the root of PROTO_FILES_SEARCH_ROOT)
+    # e.g., "newsletter" or "." (if the .proto file is at the root of PROTO_FILES_SEARCH_ROOT)
     go_output_rel_dir=$(dirname "${path_inside_proto_root}")
 
     # final_go_out_subdir: The final target directory for the generated Go files for this package.

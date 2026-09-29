@@ -38,7 +38,7 @@ Currently, this project supports generating Go modules from protobuf files. Supp
 
 ### Go Specifics
 
--   Each subdirectory in the generated `go/` directory (e.g., `go/todofy`) is treated as a separate Go module.
+-   Each subdirectory in the generated `go/` directory (e.g., `go/newsletter`) is treated as a separate Go module.
 -   Appropriate `go.mod` and `go.sum` files are created/updated in each of these subdirectories.
 
 ## Usage
